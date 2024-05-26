@@ -13,5 +13,13 @@ namespace JobAssignment_SplititExam.Controllers
         {
             _actorService = actorService;
         }
+
+        public IActionResult GetAllActors([FromQuery] int? rankStart, [FromQuery] int? rankEnd, [FromQuery] string provider = "IMDb", [FromHeader] int skip = 0, [FromHeader] int take = 10)
+        {
+            var actors = _actorService.GetActorsSummary(provider, rankStart, rankEnd, skip, take);
+
+            return Ok(actors);
+        }
     }
+
 }

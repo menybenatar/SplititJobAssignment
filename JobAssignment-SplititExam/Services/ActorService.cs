@@ -30,7 +30,9 @@ namespace Services
 
         public IEnumerable<BaseActorModel> GetActorsSummary(string provider, int? rankStart = null, int? rankEnd = null, int skip = 0, int take = 10)
         {
-            throw new NotImplementedException();
+            var actors = _actorRepository.GetActors(provider, rankStart, rankEnd, skip, take);
+
+            return new List<BaseActorModel> {actors.Select(a=> new BaseActorModel { a.Id,a.Name}).ToList() };
         }
 
         public ActorModel UpdateActor(string actorId, ActorModel request)

@@ -1,14 +1,8 @@
 ﻿using DataAccess;
 using DataAccess.Entities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
-using UnitOfWork.Interfaces;
+using Repositories.Interfaces;
 
-namespace UnitOfWork.Repos
+namespace Repositories.Repos
 {
     public class ActorRepository : IRepository<ActorEntity>
     {
@@ -34,6 +28,30 @@ namespace UnitOfWork.Repos
         {
             throw new NotImplementedException();
         }
+        public IEnumerable<ActorEntity> GetActors(string provider, int? rankStart = null, int? rankEnd = null, int skip = 0, int take = 10)
+        {
+            var query = _actorContext.Actors.AsQueryable();
+
+            if (!string.IsNullOrEmpty(provider))
+            {
+                query = query.Where(a => a.Source == provider);
+            }
+
+            if (rankStart.HasValue)
+            {
+                query = query.Where(a => a.Rank >= rankStart.Value);
+            }
+
+            if (rankEnd.HasValue)
+            {
+                query = query.Where(a => a.Rank <= rankEnd.Value);
+            }
+
+            query = query.Skip(skip).Take(take);
+
+            return query.ToList();
+        }
+
         private void Save()
         {
             _actorContext.SaveChanges();
