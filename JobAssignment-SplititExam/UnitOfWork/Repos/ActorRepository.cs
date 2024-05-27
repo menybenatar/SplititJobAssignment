@@ -1,27 +1,28 @@
 ﻿using DataAccess;
 using DataAccess.Entities;
+using Domain.Models;
 using Repositories.Interfaces;
 
 namespace Repositories.Repos
 {
-    public class ActorRepository : IRepository<ActorEntity>
+    public class ActorRepository :IActorRepository
     {
-        private readonly ActorContext _actorContext;
+        private readonly DBContext _actorContext;
 
-        public ActorRepository(ActorContext context)
+        public ActorRepository(DBContext context)
         {
             _actorContext = context;
         }
-        public void Add(ActorEntity actor)
+        public async Task AddAsync(ActorEntity actor)
         {
-            _actorContext.Actors.Add(actor);
-            Save();
+            await _actorContext.Actors.AddAsync(actor);
+            await SaveAsync();
         }
 
-        public void Delete(ActorEntity actor)
+        public async void Delete(ActorEntity actor)
         {
             _actorContext.Remove(actor);
-            Save();
+            await SaveAsync();
         }
 
         public void Update(ActorEntity entity)
@@ -52,9 +53,24 @@ namespace Repositories.Repos
             return query.ToList();
         }
 
-        private void Save()
+        private async Task SaveAsync()
         {
-            _actorContext.SaveChanges();
+           await _actorContext.SaveChangesAsync();
+        }
+
+        public ActorModel GetActor(string actorId)
+        {
+            throw new NotImplementedException();
+        }
+
+        IEnumerable<ActorModel> IActorRepository.GetActors(string provider, int? rankStart, int? rankEnd, int skip, int take)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void AddActors(IEnumerable<ActorModel> actors)
+        {
+            throw new NotImplementedException();
         }
     }
 }
