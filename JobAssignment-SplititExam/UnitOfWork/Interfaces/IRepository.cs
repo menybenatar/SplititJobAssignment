@@ -9,7 +9,7 @@ namespace Repositories.Interfaces
 {
     public interface IRepository<TEntity>
     {
-        Task AddAsync(ActorEntity actor);
+        void Add(TEntity actor);
         void Update(TEntity entity);
         void Delete(TEntity entity);
         

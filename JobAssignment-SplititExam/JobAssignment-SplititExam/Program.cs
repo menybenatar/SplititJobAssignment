@@ -1,14 +1,17 @@
 using DataAccess;
 using Domain.Interfaces;
+using JobAssignmentSplititExam.Middleware;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.OpenApi.Models;
 using Repositories.Interfaces;
 using Repositories.Repos;
 using Services;
 using Services.Scrapers;
+using Services.Settings;
 using System.Reflection;
 
-namespace JobAssignment_SplititExam
+namespace JobAssignmentSplititExam
 {
     public class Program
     {
@@ -24,29 +27,35 @@ namespace JobAssignment_SplititExam
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Job Assignment Splitit Exam", Version = "v1" });
             });
-
-
-            builder.Services.AddDbContext<DBContext>(options =>options.UseInMemoryDatabase("ActorsDB"));
+            builder.Services.Configure<ScraperSettings>(builder.Configuration.GetSection("ScraperSettings"));
+            builder.Services.AddDbContext<DBContext>(options =>
+                 options.UseInMemoryDatabase("ActorsDB"));
             builder.Services.AddScoped<IActorService, ActorService>();
             builder.Services.AddScoped<IActorRepository, ActorRepository>();
-
             builder.Services.AddScoped<IScraper, IMDbScraper>();
             builder.Services.AddScoped<IScraperService, ScraperService>();
+
 
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
+                app.UseDeveloperExceptionPage();
                 app.UseSwagger();
-                app.UseSwaggerUI();
+                app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Job Assignment Splitit Exam V1"));
             }
-
-            app.UseHttpsRedirection();
+            app.UseRouting();
             app.UseAuthorization();
-            app.MapControllers();
 
-            // Scraping 
+            app.UseMiddleware<ExceptionHandlingMiddleware>();
+
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapControllers();
+            });
+
+            // Scraping
             using (var scope = app.Services.CreateScope())
             {
                 var scraperService = scope.ServiceProvider.GetRequiredService<IScraperService>();

@@ -1,37 +1,85 @@
 ﻿using DataAccess;
 using DataAccess.Entities;
 using Domain.Models;
+using Microsoft.EntityFrameworkCore;
 using Repositories.Interfaces;
+using Repositories.Mappers;
 
 namespace Repositories.Repos
 {
-    public class ActorRepository :IActorRepository
+    public class ActorRepository : IActorRepository
     {
-        private readonly DBContext _actorContext;
+        private readonly DBContext _dbContext;
 
         public ActorRepository(DBContext context)
         {
-            _actorContext = context;
+            _dbContext = context;
         }
-        public async Task AddAsync(ActorEntity actor)
+        public void Add(ActorModel actor)
         {
-            await _actorContext.Actors.AddAsync(actor);
-            await SaveAsync();
-        }
-
-        public async void Delete(ActorEntity actor)
-        {
-            _actorContext.Remove(actor);
-            await SaveAsync();
+            var actorEntity = actor.MapToEntity();
+            _dbContext.Actors.Add(actorEntity);
+            SaveChanges();
         }
 
-        public void Update(ActorEntity entity)
+        public void Delete(ActorModel actor)
         {
-            throw new NotImplementedException();
+            var actorToDelete = _dbContext.Actors.FirstOrDefault(x=>x.Id== actor.Id);
+            if (actorToDelete == null)
+            {
+                throw new InvalidOperationException();
+            }
+            _dbContext.Actors.Remove(actorToDelete);
+            SaveChanges();
         }
-        public IEnumerable<ActorEntity> GetActors(string provider, int? rankStart = null, int? rankEnd = null, int skip = 0, int take = 10)
+
+        public void Update(ActorModel model)
         {
-            var query = _actorContext.Actors.AsQueryable();
+            // Retrieve the existing entity from the database
+            var actorEntity = _dbContext.Actors.FirstOrDefault(a => a.Id == model.Id);
+
+            if (actorEntity != null)
+            {
+                // Update properties from the model to the entity
+                actorEntity.Name = model.Name;
+                actorEntity.Details = model.Details;
+                actorEntity.Type = model.Type;
+                actorEntity.Rank = model.Rank;
+                actorEntity.Source = model.Source;
+
+                // Mark the entity as modified
+                _dbContext.Entry(actorEntity).State = EntityState.Modified;
+
+                // Save changes
+                SaveChanges();
+            }
+            else
+            {
+                // Handle the case where the actor does not exist in the database
+                throw new InvalidOperationException("Actor not found.");
+            }
+        }
+
+        public ActorModel GetActor(string actorId)
+        {
+            var entity = _dbContext.Actors.FirstOrDefault(x => x.Id == actorId);
+            return entity?.MapToModel();
+        }
+
+        public void AddActors(IEnumerable<ActorModel> actors)
+        {
+            var actorsEntities = actors.Select(x => x.MapToEntity()).ToList();
+            _dbContext.Actors.AddRange(actorsEntities);
+            SaveChanges();
+        }
+        private void SaveChanges()
+        {
+             _dbContext.SaveChanges();
+        }
+
+        IEnumerable<ActorModel> IActorRepository.GetActors(string provider, int? rankStart, int? rankEnd, int skip, int take)
+        {
+            var query = _dbContext.Actors.AsQueryable();
 
             if (!string.IsNullOrEmpty(provider))
             {
@@ -50,27 +98,7 @@ namespace Repositories.Repos
 
             query = query.Skip(skip).Take(take);
 
-            return query.ToList();
-        }
-
-        private async Task SaveAsync()
-        {
-           await _actorContext.SaveChangesAsync();
-        }
-
-        public ActorModel GetActor(string actorId)
-        {
-            throw new NotImplementedException();
-        }
-
-        IEnumerable<ActorModel> IActorRepository.GetActors(string provider, int? rankStart, int? rankEnd, int skip, int take)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void AddActors(IEnumerable<ActorModel> actors)
-        {
-            throw new NotImplementedException();
+            return query.Select(x => x.MapToModel()).ToList();
         }
     }
 }

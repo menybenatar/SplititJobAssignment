@@ -4,10 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Domain.Interfaces
+namespace Services.Settings
 {
-    public interface IScraperService
+    public class ScraperSettings
     {
-        Task ScrapeActorsAsync();
+        public IMDbSettings IMDb { get; set; }
     }
 }
